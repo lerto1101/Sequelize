@@ -2,54 +2,59 @@ import passport from './passport';
 import jwt from 'jsonwebtoken';
 
 class UserMiddleware {
-    Authenticate = (req, res, next) => {
-        passport.authenticate('local',{ session:false},async(err,user) =>{
+    Authenticate = async (req, res, next) => {
+        passport.authenticate('local',{session:false},async (err,user) =>{
             if(err){
                 const{status, message} = err;
-                res.status(status).json({message});
-                return;
+                return res.status(status).json({message});
             }
-//             if(!user){
-//                 res.status(400).json({message:'登入失敗'});
-//                 return;
-//             }
-//             res.status(200).json({message:'找尋成功'});            
-//         })(req,res,next)
-//     };
-// }
             const data = {
                 id:user.id,
                 expireTime:new Date().getTime()+10*60*1000
             }
-            const token = jwt.sign(data,process.env.APP_KEY);
+            let token;
+            try {
+                token = jwt.sign(data,process.env.APP_KEY);
+            } catch(error) {
+                console.log(error);
+                return res.status(403).send("Bad Request");
+            } finally {
+                if (token == undefined)
+                    return res.status(403).send("Bad Request");
+            }
             return res.status(200).json({message:`找尋成功!`,token:`${token}`});
         })(req,res,next);
     };
 
 
     //解密
-    decodeToken = (token)=>{
-        try{
+    decodeToken = async (token)=>{
+        try {
             return jwt.verify(token,process.env.APP_KEY);
-        }
-        catch(err){
+        } catch(err) {
             return err;
         };
     };
 
     jwtAuthenticate = async (req, res, next)=>{
         passport.authenticate('jwt',{session:false},async (err, user, info)=>{
-            if(info){
-                res.status(401).json({message:'尚未登入!'})
-            }
+            //In javascript error handle always the priority
             if(err){
                 const {status, message} = err;
-                res.status(status).json({message});
-                return;
+                return res.status(status).json({message});
             }
-            const {id} = user;
-            req.id = id;
-            next();
+
+            if(info){
+                //if user not login yet, just reject this request
+                return res.status(401).json({message:'尚未登入!'})
+            }
+            
+            if(user.id){
+                req.id = user.id;
+            }else{
+                return res.status(403).send("Bad Request");
+            }
+            next(); //i don't return next() becasue after next() passport still handle something
         })(req,res,next);
     }
 }
