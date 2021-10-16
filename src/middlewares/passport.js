@@ -34,7 +34,7 @@ passport.use(new LocalStrategy({
     }
 ));
 
-passport.use(new jwtStrategy(options,(payload,callback) => {
+passport.use(new jwtStrategy(options, (payload,callback) => {
     const status = calcExpireTime(payload);
     if(!status){
         return callback({status:401, message:'Token 時間到期，請重新登入!'}); //http code 404 not applicable
@@ -43,7 +43,7 @@ passport.use(new jwtStrategy(options,(payload,callback) => {
 }))
 
 const calcExpireTime = (payload) => {
-    const {expireTime}=payload;
+    const {expireTime} = payload;
     const currentTime = new Date().getTime();
 
     if(currentTime > expireTime){

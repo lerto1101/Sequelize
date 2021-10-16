@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 class UserMiddleware {
     Authenticate = async (req, res, next) => {
-        passport.authenticate('local',{ session:false},async(err,user) =>{
+        passport.authenticate('local',{session:false},async (err,user) =>{
             if(err){
                 const{status, message} = err;
                 return res.status(status).json({message});
@@ -19,7 +19,7 @@ class UserMiddleware {
                 console.log(error);
                 return res.status(403).send("Bad Request");
             } finally {
-                if (token==undefined)
+                if (token == undefined)
                     return res.status(403).send("Bad Request");
             }
             return res.status(200).json({message:`找尋成功!`,token:`${token}`});
@@ -49,9 +49,6 @@ class UserMiddleware {
                 return res.status(401).json({message:'尚未登入!'})
             }
             
-            // const {id} = user.id;
-            // req.id = id;
-
             if(user.id){
                 req.id = user.id;
             }else{
